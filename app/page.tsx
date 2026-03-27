@@ -21,7 +21,7 @@ import {
   SidebarProvider,
   SidebarInset,
 } from "@/components/ui/sidebar";
-import { Flame, Construction, Droplet, TriangleAlert, Activity, Recycle, Trash2, Stethoscope, Dog, MapPin, Clock, User } from "lucide-react";
+import { Flame, Construction, Droplet, TriangleAlert, Activity, Recycle, Trash2, Stethoscope, Dog, MapPin, Clock, User, X, Camera, ExternalLink } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 const CATEGORIES = [
@@ -38,47 +38,49 @@ const CATEGORIES = [
 
 function AnalyticsSidebar({ reportsCount, severeCount, categories }: any) {
   return (
-    <Sidebar collapsible="offcanvas" className="border-r shadow-lg">
-      <SidebarHeader className="p-6 border-b">
+    <Sidebar collapsible="offcanvas" className="border-r shadow-none bg-background/50 backdrop-blur-md">
+      <SidebarHeader className="px-5 py-6 border-b border-border/50">
         <div className="flex items-center gap-3">
-          <div className="bg-primary/10 text-primary flex aspect-square size-10 items-center justify-center rounded-xl border border-primary/20">
-            <Activity className="size-5" />
+          <div className="bg-primary/5 text-primary flex aspect-square size-9 items-center justify-center rounded-lg border border-primary/10">
+            <Activity className="size-4.5" />
           </div>
           <div className="flex flex-col gap-0.5 leading-none">
-            <span className="text-base font-bold text-foreground">Live Hotspots</span>
-            <span className="text-muted-foreground text-[11px] uppercase tracking-wider font-semibold">Agora Network Map</span>
+            <span className="text-sm font-bold text-foreground tracking-tight">Agora Network</span>
+            <span className="text-muted-foreground text-[10px] uppercase tracking-widest font-semibold opacity-70">Live Hotspots</span>
           </div>
         </div>
-        
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <div className="bg-background rounded-lg border p-4 text-center shadow-sm">
-            <p className="text-2xl font-black text-foreground">{reportsCount}</p>
-            <p className="text-muted-foreground mt-1 text-[10px] font-bold uppercase tracking-widest opacity-80">Total</p>
+
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          <div className="bg-muted/30 rounded-lg border border-border/50 p-3 text-center transition-colors hover:bg-muted/40">
+            <p className="text-xl font-bold text-foreground tracking-tighter">{reportsCount}</p>
+            <p className="text-muted-foreground mt-0.5 text-[9px] font-bold uppercase tracking-widest opacity-60">Total</p>
           </div>
-          <div className="bg-destructive/10 border-destructive/20 rounded-lg border p-4 text-center shadow-sm">
-            <p className="text-2xl font-black text-destructive">{severeCount}</p>
-            <p className="text-destructive/80 mt-1 text-[10px] font-bold uppercase tracking-widest opacity-80">Severe</p>
+          <div className="bg-destructive/5 border-destructive/10 rounded-lg border p-3 text-center transition-colors hover:bg-destructive/10">
+            <p className="text-xl font-bold text-destructive tracking-tighter">{severeCount}</p>
+            <p className="text-destructive/60 mt-0.5 text-[9px] font-bold uppercase tracking-widest opacity-70">Severe</p>
           </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="p-4 space-y-6 text-sm">
+      <SidebarContent className="px-3 py-4 space-y-4 text-sm scrollbar-hide">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[11px] font-bold px-1 text-muted-foreground uppercase tracking-widest mb-2">Category Breakdown</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] font-bold px-2 text-muted-foreground/60 uppercase tracking-[0.15em] mb-2">Category Intelligence</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="mt-2 space-y-2">
+            <SidebarMenu className="space-y-1">
               {CATEGORIES.map((cat) => {
                 const Icon = cat.icon;
                 return (
                   <SidebarMenuItem key={cat.id}>
-                    <div className="flex items-center justify-between pointer-events-none p-2 rounded-md transition-colors bg-muted/30 border border-transparent hover:border-border">
-                      <div className="flex items-center gap-3">
-                        <Icon className={`size-4 ${cat.color}`} />
-                        <span className="font-semibold text-sm text-foreground">{cat.label}</span>
+                    <div className="flex items-center justify-between pointer-events-none px-2 py-1.5 rounded-md transition-all bg-transparent border border-transparent hover:bg-muted/30">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`p-1 rounded-sm bg-muted/50 ${cat.color.replace('text-', 'bg-').replace('-400', '/10').replace('-500', '/10').replace('-600', '/10').replace('-700', '/10')}`}>
+                          <Icon className={`size-3.5 ${cat.color} opacity-90`} />
+                        </div>
+                        <span className="font-medium text-[13px] text-foreground/90">{cat.label}</span>
                       </div>
-                      <SidebarMenuBadge className="bg-background border shadow-xs text-foreground font-bold">
+                      <span className="text-[10px] font-bold text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded border border-border/20 min-w-[20px] text-center">
                         {categories[cat.id] || 0}
-                      </SidebarMenuBadge>
+                      </span>
                     </div>
                   </SidebarMenuItem>
                 );
@@ -101,7 +103,7 @@ export default function Home() {
       const { data, error } = await supabase
         .from('reports')
         .select('id, latitude, longitude, category, severity');
-      
+
       if (!error && data) {
         const validPoints = data.filter(p => p.latitude && p.longitude);
         setPoints(validPoints);
@@ -131,13 +133,13 @@ export default function Home() {
   const handlePointClick = async (feature: any) => {
     const reportId = feature.properties.id;
     setIsLoadingReport(true);
-    
+
     const { data, error } = await supabase
       .from('reports')
       .select('*')
       .eq('id', reportId)
       .single();
-    
+
     if (!error && data) {
       setSelectedReport(data);
     }
@@ -149,8 +151,8 @@ export default function Home() {
       type: "FeatureCollection",
       features: points.map((point) => ({
         type: "Feature",
-        properties: { 
-          id: point.id, 
+        properties: {
+          id: point.id,
           severity: point.severity,
           color: CATEGORIES.find(c => c.id === point.category)?.hex || "#3b82f6"
         },
@@ -171,8 +173,8 @@ export default function Home() {
 
   return (
     <SidebarProvider>
-      <AnalyticsSidebar 
-        reportsCount={points.length} 
+      <AnalyticsSidebar
+        reportsCount={points.length}
         severeCount={severeCount}
         categories={categoriesCount}
       />
@@ -186,94 +188,138 @@ export default function Home() {
           className="flex-1 w-full h-full border-none outline-none"
         >
           <MapControls position="bottom-right" showZoom showCompass />
-          
+
           <MapClusterLayer
             data={clusterData}
             onPointClick={handlePointClick}
           />
 
-          {selectedReport && (
-            <MapPopup
-              latitude={selectedReport.latitude}
-              longitude={selectedReport.longitude}
-              onClose={() => setSelectedReport(null)}
-              closeButton
-              className="p-0 overflow-hidden w-72 sm:w-80 shadow-2xl border-primary/20 backdrop-blur-md bg-card/95"
-            >
-              <div className="relative group">
-                {selectedReport.photos && selectedReport.photos.length > 0 ? (
-                  <div className="relative h-44 w-full overflow-hidden">
-                    <img 
-                      src={selectedReport.photos[0]} 
-                      alt="Reported Issue" 
-                      className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-white ${
-                        selectedReport.severity === "Severe" ? "bg-destructive shadow-lg shadow-destructive/20" : 
-                        selectedReport.severity === "Moderate" ? "bg-orange-500 shadow-lg shadow-orange-500/20" : 
-                        "bg-green-500 shadow-lg shadow-green-500/20"
-                      }`}>
-                        {selectedReport.severity}
+          {/* Minimal Side Detail Panel */}
+          <div className={`fixed top-[80px] right-0 bottom-0 w-[380px] z-50 transition-all duration-500 ease-in-out border-l bg-background/95 backdrop-blur-xl shadow-2xl ${selectedReport ? "translate-x-0" : "translate-x-full"
+            }`}>
+            {selectedReport && (
+              <div className="h-full flex flex-col h-screen">
+                {/* Header with Close */}
+                <div className="px-6 py-5 flex items-center justify-between border-b shrink-0">
+                  <div className="flex items-center gap-2.5">
+                    <div className="size-8 rounded-lg bg-primary/5 flex items-center justify-center border border-primary/10">
+                      <Activity className="size-4 text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-semibold text-foreground leading-none">Issue Summary</h2>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1 font-medium">#{selectedReport.id.split('-')[0]}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedReport(null)}
+                    className="p-2 hover:bg-muted rounded-full transition-colors group"
+                  >
+                    <X className="size-4 text-muted-foreground group-hover:text-foreground" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                  {/* Image Section - Compact & Integrated */}
+                  <div className="h-52 w-full bg-muted/30 overflow-hidden relative border-b">
+                    {selectedReport.photos && selectedReport.photos[0] ? (
+                      <img
+                        src={selectedReport.photos[0]}
+                        alt="Evidence"
+                        className="w-full h-full object-cover"
+                        onError={(e) => (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1542601906970-34f67ef24726?auto=format&fit=crop&q=80&w=800"}
+                      />
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center text-muted-foreground/30 gap-2">
+                        <Camera className="size-6" />
+                        <span className="text-[10px] uppercase tracking-wider font-bold">No Imagery Provided</span>
+                      </div>
+                    )}
+
+                    {/* Floating Info Overlay */}
+                    <div className="absolute top-4 left-4 flex flex-col gap-2">
+                      <span className={`px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-widest backdrop-blur-md ${selectedReport.severity === "Severe" || selectedReport.severity === "Blocking Access" ? "bg-red-500/20 text-red-200 border border-red-500/30" :
+                        selectedReport.severity === "Moderate" ? "bg-amber-500/20 text-amber-200 border border-amber-500/30" :
+                          "bg-emerald-500/20 text-emerald-200 border border-emerald-500/30"
+                        }`}>
+                        {selectedReport.severity || "Reported"}
                       </span>
                     </div>
                   </div>
-                ) : (
-                  <div className="h-44 w-full bg-muted flex items-center justify-center flex-col gap-2">
-                    <div className="p-3 rounded-full bg-muted-foreground/10 text-muted-foreground">
-                      <TriangleAlert className="size-6" />
-                    </div>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">No Photo Provided</p>
-                  </div>
-                )}
-              </div>
 
-              <div className="p-4 space-y-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-primary font-bold text-[10px] uppercase tracking-widest opacity-70 leading-none">
-                    <MapPin className="size-3" />
-                    <span>Location Detail</span>
+                  <div className="p-6 space-y-6">
+                    {/* Location Title & Category */}
+                    <div className="space-y-4">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-widest bg-secondary text-secondary-foreground border">
+                            {CATEGORIES.find(c => c.id === selectedReport.category)?.label || "Other"}
+                          </span>
+                        </div>
+                        <h1 className="text-base font-semibold leading-snug tracking-tight text-foreground line-clamp-3">
+                          {selectedReport.exact_location}
+                        </h1>
+                      </div>
+
+                      <div className="flex items-center justify-between group">
+                        <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                          <MapPin className="size-3.5 text-primary/60" />
+                          <span className="font-medium">{selectedReport.area}, {selectedReport.state}</span>
+                        </div>
+                        <button
+                          onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${selectedReport.latitude},${selectedReport.longitude}`, '_blank')}
+                          className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
+                        >
+                          <ExternalLink className="size-3" />
+                          Directions
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Simple Stats Grid */}
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 py-4 border-y border-border/50">
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Registered</p>
+                        <p className="font-medium text-xs text-foreground flex items-center gap-1.5">
+                          <Clock className="size-3 opacity-50" />
+                          {new Date(selectedReport.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Reporter</p>
+                        <p className="font-medium text-xs text-foreground flex items-center gap-1.5 truncate">
+                          <User className="size-3 opacity-50" />
+                          {selectedReport.name}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    {selectedReport.notes && (
+                      <div className="bg-muted/30 p-4 rounded-lg border border-border/50 space-y-2">
+                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Citizen Notes</p>
+                        <p className="text-xs leading-relaxed text-foreground/80 italic">
+                          "{selectedReport.notes}"
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Minimal Actions */}
+                    <div className="grid grid-cols-2 gap-3 pt-2 pb-6">
+                      <button className="py-2.5 px-4 rounded-md border text-[11px] font-semibold hover:bg-muted transition-all active:scale-[0.98]">
+                        Flag Incident
+                      </button>
+                      <button
+                        onClick={() => setSelectedReport(null)}
+                        className="py-2.5 px-4 rounded-md bg-secondary text-secondary-foreground text-[11px] font-semibold hover:bg-secondary/80 transition-all active:scale-[0.98]"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
                   </div>
-                  <h3 className="font-bold text-base leading-tight">
-                    {selectedReport.exact_location}
-                  </h3>
-                  <p className="text-muted-foreground text-xs font-medium">
-                    {selectedReport.area}, {selectedReport.state}
-                  </p>
                 </div>
-
-                <div className="grid grid-cols-2 gap-3 pt-2">
-                  <div className="p-2 rounded-lg bg-muted/50 border border-border/50">
-                    <div className="flex items-center gap-1.5 text-muted-foreground mb-1 text-[9px] font-bold uppercase tracking-widest">
-                      <Clock className="size-2.5" />
-                      <span>Reported On</span>
-                    </div>
-                    <p className="text-[11px] font-bold leading-none">
-                      {new Date(selectedReport.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="p-2 rounded-lg bg-muted/50 border border-border/50">
-                    <div className="flex items-center gap-1.5 text-muted-foreground mb-1 text-[9px] font-bold uppercase tracking-widest">
-                      <User className="size-2.5" />
-                      <span>Reporter</span>
-                    </div>
-                    <p className="text-[11px] font-bold leading-none truncate">
-                      {selectedReport.name}
-                    </p>
-                  </div>
-                </div>
-
-                {selectedReport.notes && (
-                  <div className="pt-2 border-t border-border/50">
-                     <p className="text-[11px] text-muted-foreground italic leading-relaxed">
-                      "{selectedReport.notes}"
-                    </p>
-                  </div>
-                )}
               </div>
-            </MapPopup>
-          )}
+            )}
+          </div>
         </Map>
       </SidebarInset>
     </SidebarProvider>
