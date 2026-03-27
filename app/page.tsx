@@ -1,276 +1,281 @@
 "use client";
 
-import type { MapMouseEvent } from "maplibre-gl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Map,
   MapClusterLayer,
   MapControls,
-  MapMarker,
   MapPopup,
-  MapRoute,
-  MapViewport,
-  MarkerContent,
-  MarkerLabel,
-  MarkerPopup,
-  MarkerTooltip,
-  useMap,
 } from "@/components/ui/map";
-import { bangaloreMlas, partyConfig, type MLA } from "@/lib/bangalore-mlas";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarMenuBadge,
+  SidebarProvider,
+  SidebarInset,
+} from "@/components/ui/sidebar";
+import { Flame, Construction, Droplet, TriangleAlert, Activity, Recycle, Trash2, Stethoscope, Dog, MapPin, Clock, User } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+const CATEGORIES = [
+  { id: "plastic", label: "Plastic Waste", icon: Recycle, color: "text-blue-400", hex: "#60a5fa" },
+  { id: "organic", label: "Organic/Food", icon: Trash2, color: "text-green-500", hex: "#22c55e" },
+  { id: "debris", label: "Construction Debris", icon: Construction, color: "text-yellow-600", hex: "#ca8a04" },
+  { id: "sewage", label: "Sewage Overflow", icon: Droplet, color: "text-indigo-500", hex: "#6366f1" },
+  { id: "burning", label: "Open Burning", icon: Flame, color: "text-orange-500", hex: "#f97316" },
+  { id: "ewaste", label: "E-Waste", icon: TriangleAlert, color: "text-yellow-400", hex: "#facc15" },
+  { id: "medical", label: "Medical Waste", icon: Stethoscope, color: "text-red-400", hex: "#f87171" },
+  { id: "animal", label: "Animal Carcass", icon: Dog, color: "text-amber-700", hex: "#78350f" },
+  { id: "mixed", label: "Mixed Garbage", icon: Trash2, color: "text-stone-500", hex: "#78716c" },
+];
 
-type CapturedPoint = {
-  id: string;
-  longitude: number;
-  latitude: number;
-  createdAt: string;
-};
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-/** Fires onCapture for every click on the bare map (not on a marker). */
-function MapClickCapture({
-  onCapture,
-}: {
-  onCapture: (coords: { longitude: number; latitude: number }) => void;
-}) {
-  const { map, isLoaded } = useMap();
-
-  useEffect(() => {
-    if (!map || !isLoaded) return;
-    const handler = (e: MapMouseEvent) => {
-      onCapture({ longitude: e.lngLat.lng, latitude: e.lngLat.lat });
-    };
-    map.on("click", handler);
-    return () => { map.off("click", handler); };
-  }, [map, isLoaded, onCapture]);
-
-  return null;
-}
-
-/** Party-coloured dot pin — text appears only on hover via MarkerTooltip. */
-function MlaMarkerDot({ mla }: { mla: MLA }) {
-  const cfg = partyConfig[mla.party];
+function AnalyticsSidebar({ reportsCount, severeCount, categories }: any) {
   return (
-    <div className={`h-4 w-4 rounded-full border-2 border-background shadow-md cursor-pointer ${cfg.bg}`} />
+    <Sidebar collapsible="offcanvas" className="border-r shadow-lg">
+      <SidebarHeader className="p-6 border-b">
+        <div className="flex items-center gap-3">
+          <div className="bg-primary/10 text-primary flex aspect-square size-10 items-center justify-center rounded-xl border border-primary/20">
+            <Activity className="size-5" />
+          </div>
+          <div className="flex flex-col gap-0.5 leading-none">
+            <span className="text-base font-bold text-foreground">Live Hotspots</span>
+            <span className="text-muted-foreground text-[11px] uppercase tracking-wider font-semibold">Agora Network Map</span>
+          </div>
+        </div>
+        
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <div className="bg-background rounded-lg border p-4 text-center shadow-sm">
+            <p className="text-2xl font-black text-foreground">{reportsCount}</p>
+            <p className="text-muted-foreground mt-1 text-[10px] font-bold uppercase tracking-widest opacity-80">Total</p>
+          </div>
+          <div className="bg-destructive/10 border-destructive/20 rounded-lg border p-4 text-center shadow-sm">
+            <p className="text-2xl font-black text-destructive">{severeCount}</p>
+            <p className="text-destructive/80 mt-1 text-[10px] font-bold uppercase tracking-widest opacity-80">Severe</p>
+          </div>
+        </div>
+      </SidebarHeader>
+
+      <SidebarContent className="p-4 space-y-6 text-sm">
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-[11px] font-bold px-1 text-muted-foreground uppercase tracking-widest mb-2">Category Breakdown</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="mt-2 space-y-2">
+              {CATEGORIES.map((cat) => {
+                const Icon = cat.icon;
+                return (
+                  <SidebarMenuItem key={cat.id}>
+                    <div className="flex items-center justify-between pointer-events-none p-2 rounded-md transition-colors bg-muted/30 border border-transparent hover:border-border">
+                      <div className="flex items-center gap-3">
+                        <Icon className={`size-4 ${cat.color}`} />
+                        <span className="font-semibold text-sm text-foreground">{cat.label}</span>
+                      </div>
+                      <SidebarMenuBadge className="bg-background border shadow-xs text-foreground font-bold">
+                        {categories[cat.id] || 0}
+                      </SidebarMenuBadge>
+                    </div>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
   );
 }
-
-/** Full MLA info card shown inside a MarkerPopup. */
-function MlaCard({ mla }: { mla: MLA }) {
-  const cfg = partyConfig[mla.party];
-  const initials = mla.name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
-
-  return (
-    <div className="w-64">
-      {/* Party accent bar */}
-      <div className={`h-1 w-full rounded-t-sm ${cfg.bg} -mx-3 -mt-3 mb-3 w-[calc(100%+1.5rem)]`} />
-
-      <div className="flex items-start gap-3">
-        {/* Avatar */}
-        <div
-          className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 text-base font-bold text-white ${cfg.bg} ${cfg.border}`}
-        >
-          {initials}
-        </div>
-
-        {/* Info */}
-        <div className="min-w-0 flex-1 space-y-0.5">
-          <p className="truncate text-sm font-semibold leading-snug">
-            {mla.name}
-          </p>
-          <span
-            className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${cfg.badge}`}
-          >
-            {mla.party}
-          </span>
-          <p className="text-[11px] text-muted-foreground">
-            {mla.constituency}
-          </p>
-        </div>
-      </div>
-
-      <div className={`mt-3 border-t pt-2`}>
-        <p className="text-[11px] text-muted-foreground">
-          Karnataka Legislative Assembly
-        </p>
-        <p className="text-[11px] text-muted-foreground">
-          {mla.latitude.toFixed(4)}°N {mla.longitude.toFixed(4)}°E
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const worldCenter: [number, number] = [77.5946, 12.9716]; // opens on Bangalore
-const MLA_ZOOM_THRESHOLD = 10;
-
-function toFeatureCollection(points: CapturedPoint[]) {
-  return {
-    type: "FeatureCollection",
-    features: points.map((point, index) => ({
-      type: "Feature",
-      properties: { id: point.id, order: index + 1, createdAt: point.createdAt },
-      geometry: { type: "Point", coordinates: [point.longitude, point.latitude] },
-    })),
-  } satisfies GeoJSON.FeatureCollection<
-    GeoJSON.Point,
-    { id: string; order: number; createdAt: string }
-  >;
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Home() {
-  const [zoom, setZoom] = useState(10);
-  const [points, setPoints] = useState<CapturedPoint[]>([]);
-  const [selectedPoint, setSelectedPoint] = useState<CapturedPoint | null>(null);
+  const [points, setPoints] = useState<any[]>([]);
+  const [selectedReport, setSelectedReport] = useState<any | null>(null);
+  const [isLoadingReport, setIsLoadingReport] = useState(false);
 
-  const showMlaMarkers = zoom >= MLA_ZOOM_THRESHOLD;
+  useEffect(() => {
+    const fetchReports = async () => {
+      const { data, error } = await supabase
+        .from('reports')
+        .select('id, latitude, longitude, category, severity');
+      
+      if (!error && data) {
+        const validPoints = data.filter(p => p.latitude && p.longitude);
+        setPoints(validPoints);
+      }
+    };
+    fetchReports();
 
-  const clusterData = useMemo(() => toFeatureCollection(points), [points]);
-  const routeCoordinates = useMemo(
-    () => points.map((p) => [p.longitude, p.latitude] as [number, number]),
-    [points]
-  );
+    const channel = supabase
+      .channel('public:reports')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'reports' },
+        (payload) => {
+          const newReport = payload.new;
+          if (newReport.latitude && newReport.longitude) {
+            setPoints(current => [...current, newReport]);
+          }
+        }
+      )
+      .subscribe();
 
-  const handleViewportChange = useCallback((vp: MapViewport) => {
-    setZoom(vp.zoom);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  const handleCapture = useCallback(
-    ({ longitude, latitude }: { longitude: number; latitude: number }) => {
-      const point: CapturedPoint = {
-        id: crypto.randomUUID(),
-        longitude,
-        latitude,
-        createdAt: new Date().toISOString(),
-      };
-      setPoints((prev) => [...prev, point]);
-      setSelectedPoint(point);
-    },
-    []
-  );
+  const handlePointClick = async (feature: any) => {
+    const reportId = feature.properties.id;
+    setIsLoadingReport(true);
+    
+    const { data, error } = await supabase
+      .from('reports')
+      .select('*')
+      .eq('id', reportId)
+      .single();
+    
+    if (!error && data) {
+      setSelectedReport(data);
+    }
+    setIsLoadingReport(false);
+  };
+
+  const clusterData = useMemo(() => {
+    return {
+      type: "FeatureCollection",
+      features: points.map((point) => ({
+        type: "Feature",
+        properties: { 
+          id: point.id, 
+          severity: point.severity,
+          color: CATEGORIES.find(c => c.id === point.category)?.hex || "#3b82f6"
+        },
+        geometry: { type: "Point", coordinates: [point.longitude, point.latitude] },
+      })),
+    } satisfies GeoJSON.FeatureCollection<GeoJSON.Point>;
+  }, [points]);
+
+  const categoriesCount = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const p of points) {
+      counts[p.category] = (counts[p.category] || 0) + 1;
+    }
+    return counts;
+  }, [points]);
+
+  const severeCount = points.filter(p => p.severity === "Severe").length;
 
   return (
-    <main className="relative h-screen w-full overflow-hidden">
-      <Map
-        center={worldCenter}
-        zoom={10}
-        minZoom={1.1}
-        maxZoom={18}
-        renderWorldCopies
-        onViewportChange={handleViewportChange}
-      >
-        <MapClickCapture onCapture={handleCapture} />
-
-        <MapControls
-          position="bottom-right"
-          showZoom
-          showCompass
-          showLocate
-          showFullscreen
-        />
-
-        {/* ── Cluster layer for user-captured points ── */}
-        <MapClusterLayer
-          data={clusterData}
-          onPointClick={(feature, coordinates) => {
-            const pointId = feature.properties?.id;
-            const existing = points.find((p) => p.id === pointId);
-            setSelectedPoint(
-              existing ?? {
-                id: String(pointId ?? ""),
-                longitude: coordinates[0],
-                latitude: coordinates[1],
-                createdAt: new Date().toISOString(),
-              }
-            );
-          }}
-        />
-
-        {/* ── Route connecting captured points ── */}
-        {routeCoordinates.length > 1 && (
-          <MapRoute
-            id="captured-route"
-            coordinates={routeCoordinates}
-            color="hsl(var(--chart-2))"
-            width={3}
-            opacity={0.8}
+    <SidebarProvider>
+      <AnalyticsSidebar 
+        reportsCount={points.length} 
+        severeCount={severeCount}
+        categories={categoriesCount}
+      />
+      <SidebarInset className="relative h-screen w-full overflow-hidden flex flex-col bg-background m-0 p-0 border-none">
+        <Map
+          center={[77.5946, 12.9716]}
+          zoom={12}
+          minZoom={2}
+          maxZoom={18}
+          renderWorldCopies={true}
+          className="flex-1 w-full h-full border-none outline-none"
+        >
+          <MapControls position="bottom-right" showZoom showCompass />
+          
+          <MapClusterLayer
+            data={clusterData}
+            onPointClick={handlePointClick}
           />
-        )}
 
-        {/* ── Captured-point individual markers ── */}
-        {points.map((point, index) => (
-          <MapMarker key={point.id} longitude={point.longitude} latitude={point.latitude}>
-            <MarkerContent>
-              <div className="h-3.5 w-3.5 rounded-full border-2 border-background bg-primary shadow" />
-              <MarkerLabel>#{index + 1}</MarkerLabel>
-            </MarkerContent>
-            <MarkerTooltip>Captured point #{index + 1}</MarkerTooltip>
-            <MarkerPopup closeButton>
-              <div className="min-w-52 space-y-1">
-                <p className="text-sm font-semibold">Captured location #{index + 1}</p>
-                <p className="text-xs text-muted-foreground">
-                  {point.latitude.toFixed(5)}, {point.longitude.toFixed(5)}
-                </p>
-                <p className="text-[11px] text-muted-foreground">
-                  {new Date(point.createdAt).toLocaleString()}
-                </p>
-              </div>
-            </MarkerPopup>
-          </MapMarker>
-        ))}
-
-        {/* ── Selected-point floating popup ── */}
-        {selectedPoint && (
-          <MapPopup
-            longitude={selectedPoint.longitude}
-            latitude={selectedPoint.latitude}
-            closeButton
-            onClose={() => setSelectedPoint(null)}
-          >
-            <div className="min-w-52 space-y-1">
-              <p className="text-sm font-semibold">Selected location</p>
-              <p className="text-xs text-muted-foreground">
-                {selectedPoint.latitude.toFixed(5)}, {selectedPoint.longitude.toFixed(5)}
-              </p>
-            </div>
-          </MapPopup>
-        )}
-
-        {/* ── Bangalore MLA constituency markers (visible when zoomed in) ── */}
-        {showMlaMarkers &&
-          bangaloreMlas.map((mla) => (
-            <MapMarker
-              key={mla.constituency}
-              longitude={mla.longitude}
-              latitude={mla.latitude}
+          {selectedReport && (
+            <MapPopup
+              latitude={selectedReport.latitude}
+              longitude={selectedReport.longitude}
+              onClose={() => setSelectedReport(null)}
+              closeButton
+              className="p-0 overflow-hidden w-72 sm:w-80 shadow-2xl border-primary/20 backdrop-blur-md bg-card/95"
             >
-              <MarkerContent>
-                <MlaMarkerDot mla={mla} />
-              </MarkerContent>
+              <div className="relative group">
+                {selectedReport.photos && selectedReport.photos.length > 0 ? (
+                  <div className="relative h-44 w-full overflow-hidden">
+                    <img 
+                      src={selectedReport.photos[0]} 
+                      alt="Reported Issue" 
+                      className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-white ${
+                        selectedReport.severity === "Severe" ? "bg-destructive shadow-lg shadow-destructive/20" : 
+                        selectedReport.severity === "Moderate" ? "bg-orange-500 shadow-lg shadow-orange-500/20" : 
+                        "bg-green-500 shadow-lg shadow-green-500/20"
+                      }`}>
+                        {selectedReport.severity}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-44 w-full bg-muted flex items-center justify-center flex-col gap-2">
+                    <div className="p-3 rounded-full bg-muted-foreground/10 text-muted-foreground">
+                      <TriangleAlert className="size-6" />
+                    </div>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">No Photo Provided</p>
+                  </div>
+                )}
+              </div>
 
-              <MarkerTooltip>
-                <span className="font-semibold">{mla.name}</span>
-                <span className="mx-1 opacity-50">·</span>
-                {mla.constituency}
-              </MarkerTooltip>
+              <div className="p-4 space-y-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-primary font-bold text-[10px] uppercase tracking-widest opacity-70 leading-none">
+                    <MapPin className="size-3" />
+                    <span>Location Detail</span>
+                  </div>
+                  <h3 className="font-bold text-base leading-tight">
+                    {selectedReport.exact_location}
+                  </h3>
+                  <p className="text-muted-foreground text-xs font-medium">
+                    {selectedReport.area}, {selectedReport.state}
+                  </p>
+                </div>
 
-              <MarkerPopup closeButton>
-                <MlaCard mla={mla} />
-              </MarkerPopup>
-            </MapMarker>
-          ))}
-      </Map>
-    </main>
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div className="p-2 rounded-lg bg-muted/50 border border-border/50">
+                    <div className="flex items-center gap-1.5 text-muted-foreground mb-1 text-[9px] font-bold uppercase tracking-widest">
+                      <Clock className="size-2.5" />
+                      <span>Reported On</span>
+                    </div>
+                    <p className="text-[11px] font-bold leading-none">
+                      {new Date(selectedReport.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="p-2 rounded-lg bg-muted/50 border border-border/50">
+                    <div className="flex items-center gap-1.5 text-muted-foreground mb-1 text-[9px] font-bold uppercase tracking-widest">
+                      <User className="size-2.5" />
+                      <span>Reporter</span>
+                    </div>
+                    <p className="text-[11px] font-bold leading-none truncate">
+                      {selectedReport.name}
+                    </p>
+                  </div>
+                </div>
+
+                {selectedReport.notes && (
+                  <div className="pt-2 border-t border-border/50">
+                     <p className="text-[11px] text-muted-foreground italic leading-relaxed">
+                      "{selectedReport.notes}"
+                    </p>
+                  </div>
+                )}
+              </div>
+            </MapPopup>
+          )}
+        </Map>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
