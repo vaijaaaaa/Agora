@@ -34,6 +34,7 @@ export const metadata: Metadata = {
 };
 
 import { Header } from "@/components/header";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function RootLayout({
   children,
@@ -45,8 +46,10 @@ export default function RootLayout({
       <body
         className={`${satoshi.variable} font-sans antialiased`}
       >
-        <Header />
-        {children}
+        <TooltipProvider>
+          <Header />
+          {children}
+        </TooltipProvider>
       </body>
     </html>
   );

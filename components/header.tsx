@@ -20,19 +20,18 @@ export function Header() {
         </Link>
 
         <nav className="flex items-center gap-6 text-sm font-medium">
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className={`transition-colors hover:text-foreground ${pathname === "/" ? "text-foreground" : "text-muted-foreground"}`}
           >
             Feed
           </Link>
-          <Link 
-            href="/report" 
-            className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 transition-colors ${
-              pathname === "/report" 
-                ? "bg-primary text-primary-foreground font-semibold" 
-                : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-            }`}
+          <Link
+            href="/report"
+            className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 transition-colors ${pathname === "/report"
+              ? "bg-primary text-primary-foreground font-semibold"
+              : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+              }`}
           >
             <Plus className="h-4 w-4" />
             Report
