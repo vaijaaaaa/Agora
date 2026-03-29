@@ -7,7 +7,7 @@ Agora is a map-based platform for reporting and tracking urban infrastructure is
 It creates a centralized, location-based record of civic problems using user-submitted reports with images and geolocation.
 
 ---
- 
+  
 ## Problem
 
 Urban issues often remain unresolved because:
